@@ -1,0 +1,11 @@
+PREFIX db: <http://dbpedia.org/>
+PREFIX dbr: <http://dbpedia.org/resource/>
+prefix dbo: <http://dbpedia.org/ontology/> 
+prefix geo: <http://www.opengis.net/ont/geosparql#>
+prefix dbco: <http://purl.org/ontology/dbcells/cells#>
+SELECT ?cell ?pol
+WHERE {
+  ?cell <http://www.opengis.net/ont/geosparql#asWKT> ?pol.
+  ?cell dbco:resolution 0.083e0.
+}
+limit 25
