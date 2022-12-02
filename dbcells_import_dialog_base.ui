@@ -22,14 +22,14 @@
      <item>
       <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>Dataset ID</string>
+        <string>Triple Store Endpoint</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineDataset">
+      <widget class="QLineEdit" name="lineEndpoint">
        <property name="text">
-        <string>landchangedata/novoprojeto</string>
+        <string>https://dbcells-staging.herokuapp.com/cells</string>
        </property>
       </widget>
      </item>
@@ -53,7 +53,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineSPARQL"/>
+        <widget class="QLineEdit" name="lineSPARQL">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QToolButton" name="buttonSPARQL">

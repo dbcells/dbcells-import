@@ -47,9 +47,9 @@ except:
     pip.main(['install','--upgrade','pip'])
 
 try:
-    import datadotworld as dw
+    from SPARQLWrapper import SPARQLWrapper, JSON, N3
 except:
-    pip.main(['install', 'datadotworld[pandas]'])
+    pip.main(['install', 'SPARQLWrapper'])
 
 
 dic_attr_type = {
@@ -284,18 +284,23 @@ class DBCellsImport:
         layer.updateFields()
         features = []
 
-        ds = dw.query(self.dlg.lineDataset.text(), self.sparql, query_type='sparql')
-        df = ds.dataframe
 
-        df = df.reset_index()  # make sure indexes pair with number of rows
+        sparql = SPARQLWrapper(self.dlg.lineEndpoint.text())
+        sparql.setQuery(self.sparql)
+        sparql.setReturnFormat(JSON)
+        results = sparql.query().convert()
+
+        
         features = []
         i = 0
-        for index, row in df.iterrows():
+        for row in results["results"]["bindings"]:
             fet = QgsFeature()
-            fet.setGeometry( QgsGeometry.fromWkt ( row[self.geo_column]) )
+            fet.setGeometry( QgsGeometry.fromWkt ( row[self.geo_column]["value"]) )
             attrs = []
+            
             for attr in self.saveAttrs:
-                attrs.append(row[attr[2]])
+                print (attr)
+                attrs.append(row[attr[2]]["value"])
             fet.setAttributes(attrs)
             features.append(fet)
             i =+ 1
