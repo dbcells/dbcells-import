@@ -21,15 +21,43 @@
  *                                                                         *
  ***************************************************************************/
 """
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, QVariant
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QComboBox, QCheckBox,QLineEdit, QTableWidgetItem, QFileDialog
+
+from qgis.core import QgsVectorLayer, QgsField, QgsGeometry, QgsFeature, QgsProject,  Qgis
 
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
 from .dbcells_import_dialog import DBCellsImportDialog
 import os.path
+
+
+import os
+
+plugin_dir = os.path.dirname(__file__)
+
+try:
+    import pip
+except:
+    exec(open(os.path.join(plugin_dir, "get_pip.py")).read())
+    import pip
+    # just in case the included version is old
+    pip.main(['install','--upgrade','pip'])
+
+try:
+    import datadotworld as dw
+except:
+    pip.main(['install', 'datadotworld[pandas]'])
+
+
+dic_attr_type = {
+    "String": QVariant.String,
+    "Int": QVariant.Int,
+    "Double": QVariant.Double,
+
+}
 
 
 class DBCellsImport:
@@ -189,6 +217,11 @@ class DBCellsImport:
             self.first_start = False
             self.dlg = DBCellsImportDialog()
 
+        
+        
+        self.dlg.button_box.accepted.connect(self.execute)
+        self.dlg.buttonSPARQL.clicked.connect(self.open_sparql)
+
         # show the dialog
         self.dlg.show()
         # Run the dialog event loop
@@ -198,3 +231,123 @@ class DBCellsImport:
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
             pass
+
+
+    def execute (self):
+        #ds = dw.query('landchangedata/novoprojeto', s, query_type='sparql')
+        #table = ds.dataframe
+        #print (table)
+        self.check_attributes()
+        self.import_layer()
+
+    def check_attributes(self):
+        #
+        self.geo_column = ""
+        self.saveAttrs = []
+        for row in range(self.dlg.tableAttributes.rowCount()): 
+            line_edit = self.dlg.tableAttributes.cellWidget(row, 4)
+            attr_name = line_edit.text()
+
+            item = self.dlg.tableAttributes.item(row, 3)
+            var_name = item.text()
+        
+
+            check_id = self.dlg.tableAttributes.cellWidget(row, 1)
+            if (check_id.isChecked()):
+                self.id_column = attr_name
+
+            check_geo = self.dlg.tableAttributes.cellWidget(row, 2)
+            if (check_geo.isChecked()):
+                self.geo_column = attr_name
+
+            check = self.dlg.tableAttributes.cellWidget(row, 0) 
+            if check.isChecked():
+                combo_type = self.dlg.tableAttributes.cellWidget(row, 5)
+                self.saveAttrs.append((attr_name, dic_attr_type[combo_type.currentText()], var_name ))
+        
+        print (self.saveAttrs)      
+        print (self.geo_column)          
+
+    def import_layer(self):
+
+        #ds = dw.query('landchangedata/novoprojeto', s, query_type='sparql')
+
+        # create layer
+        layer = QgsVectorLayer('Polygon?crs=epsg:4326?field='+self.id_column,self.dlg.lineLayer.text(),"memory")
+        pr = layer.dataProvider()
+        layer.startEditing()
+
+        attributes = [ QgsField (x[0], x[1] ) for x in  self.saveAttrs  ] # não funcionou com o map ???
+        
+        print (attributes)
+        pr.addAttributes(attributes)
+        layer.updateFields()
+        features = []
+
+        ds = dw.query(self.dlg.lineDataset.text(), self.sparql, query_type='sparql')
+        df = ds.dataframe
+
+        df = df.reset_index()  # make sure indexes pair with number of rows
+        features = []
+        i = 0
+        for index, row in df.iterrows():
+            fet = QgsFeature()
+            fet.setGeometry( QgsGeometry.fromWkt ( row[self.geo_column]) )
+            attrs = []
+            for attr in self.saveAttrs:
+                attrs.append(row[attr[2]])
+            fet.setAttributes(attrs)
+            features.append(fet)
+            i =+ 1
+        layer.addFeatures(features)
+        layer.updateExtents()
+
+
+        layer.commitChanges()
+        QgsProject.instance().addMapLayer(layer)
+
+
+        self.iface.messageBar().pushMessage(
+            "Success", "Imported layer",
+            level=Qgis.Success, duration=3
+        )
+
+
+    def open_sparql (self):
+        
+        self.file_name=str(QFileDialog.getOpenFileName(caption="Defining input file", filter="SPARQL(*.sparql)")[0])
+        self.dlg.lineSPARQL.setText(self.file_name)
+        with open(self.file_name, 'r') as file:
+            data = file.read()
+            self.sparql = data
+            self.fill_table(data)
+
+    def fill_table(self, s): 
+
+        tokens = s.replace('\n', ' ').split(" ")
+        tokens = list(filter(lambda x: x != '', tokens))
+        print (tokens)
+        tokens_upper = list(map (lambda x: x.upper(), tokens))
+        start = tokens_upper.index('SELECT') + 1
+        end = tokens_upper.index('WHERE') 
+        attributes = tokens[start:end] #identificar os atributos
+        attributes = list(map (lambda x: x[1:], attributes))
+        print (attributes)
+        
+        self.dlg.tableAttributes.setRowCount(len(attributes))
+        self.dlg.tableAttributes.setColumnCount(6)
+        self.dlg.tableAttributes.setHorizontalHeaderLabels(["Import?", "IDColumn?", "GeoColumn?", "Variable", "Attribute name", "Attribute type"])
+
+        start = 0
+        for attr in attributes:
+            self.dlg.tableAttributes.setCellWidget(start, 0, QCheckBox())
+            self.dlg.tableAttributes.setCellWidget(start, 1, QCheckBox())
+            self.dlg.tableAttributes.setCellWidget(start, 2, QCheckBox())
+            self.dlg.tableAttributes.setItem(start, 3, QTableWidgetItem(attr))
+            self.dlg.tableAttributes.setCellWidget(start, 4, QLineEdit(attr))
+            comboBox = QComboBox()
+            comboBox.addItem("String")
+            comboBox.addItem("Int")
+            comboBox.addItem("Double")
+            self.dlg.tableAttributes.setCellWidget(start, 5, comboBox)
+            start += 1

@@ -14,17 +14,28 @@
    <string>DBCells Import</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="0">
-    <widget class="QLineEdit" name="lineToken"/>
-   </item>
    <item row="0" column="0">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>API Token</string>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <property name="bottomMargin">
+      <number>10</number>
      </property>
-    </widget>
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Dataset ID</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="lineDataset">
+       <property name="text">
+        <string>landchangedata/novoprojeto</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
-   <item row="4" column="0">
+   <item row="1" column="0">
     <layout class="QVBoxLayout" name="formLayout_2" stretch="0,0,0,0">
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_6">
@@ -126,34 +137,6 @@
         </widget>
        </item>
       </layout>
-     </item>
-    </layout>
-   </item>
-   <item row="2" column="0">
-    <widget class="QPushButton" name="buttonToken">
-     <property name="text">
-      <string>Apply</string>
-     </property>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <property name="bottomMargin">
-      <number>10</number>
-     </property>
-     <item>
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>Dataset ID</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="lineDataset">
-       <property name="text">
-        <string>landchangedata/novoprojeto</string>
-       </property>
-      </widget>
      </item>
     </layout>
    </item>
