@@ -177,7 +177,7 @@ class DBCellsImport:
             self.iface.addToolBarIcon(action)
 
         if add_to_menu:
-            self.iface.addPluginToMenu(
+            self.iface.addPluginToVectorMenu(
                 self.menu,
                 action)
 
@@ -202,7 +202,7 @@ class DBCellsImport:
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
-            self.iface.removePluginMenu(
+            self.iface.addPluginToVectorMenu(
                 self.tr(u'&DBCells'),
                 action)
             self.iface.removeToolBarIcon(action)
