@@ -319,7 +319,7 @@ class DBCellsImport:
             )
         except:
             self.iface.messageBar().pushMessage(
-                "Error", "Imported layer",
+                "Error", "layer not imported",
                 level=Qgis.Success, duration=3
             )
             
