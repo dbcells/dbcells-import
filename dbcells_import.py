@@ -217,12 +217,11 @@ class DBCellsImport:
             self.first_start = False
             self.dlg = DBCellsImportDialog()
             
-
-        self.dlg.button_box.accepted.connect(self.execute)
-        
-        self.dlg.button_box.rejected.connect(self.close)
-        
-        self.dlg.buttonSPARQL.clicked.connect(self.open_sparql)
+            self.dlg.button_box.accepted.connect(self.execute)
+            
+            self.dlg.button_box.rejected.connect(self.close)
+            
+            self.dlg.buttonSPARQL.clicked.connect(self.open_sparql)
 
         # show the dialog
         self.dlg.show()
@@ -291,8 +290,13 @@ class DBCellsImport:
         sparql = SPARQLWrapper(self.dlg.lineEndpoint.text())
         sparql.setQuery(self.sparql)
         sparql.setReturnFormat(JSON)
-        results = sparql.query().convert()
-
+        
+        try:
+            results = sparql.query().convert()
+            for w in results["results"]["bindings"]:
+                print(w)
+        except Exception as e:
+            print(e)
         
         features = []
         i = 0
@@ -325,9 +329,6 @@ class DBCellsImport:
         
         self.file_name=str(QFileDialog.getOpenFileName(caption="Defining input file", filter="SPARQL(*.sparql)")[0])
         self.dlg.lineSPARQL.setText(self.file_name)
-        self.abrir_open()
-        
-    def abrir_open (self):
         try: 
             with open(self.file_name, 'r') as file:
                 data = file.read()
