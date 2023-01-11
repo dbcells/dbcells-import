@@ -216,14 +216,17 @@ class DBCellsImport:
         if self.first_start == True:
             self.first_start = False
             self.dlg = DBCellsImportDialog()
+            
 
-        
-        
         self.dlg.button_box.accepted.connect(self.execute)
+        
+        self.dlg.button_box.rejected.connect(self.close)
+        
         self.dlg.buttonSPARQL.clicked.connect(self.open_sparql)
 
         # show the dialog
         self.dlg.show()
+        
         # Run the dialog event loop
         result = self.dlg.exec_()
         # See if OK was pressed
@@ -322,10 +325,16 @@ class DBCellsImport:
         
         self.file_name=str(QFileDialog.getOpenFileName(caption="Defining input file", filter="SPARQL(*.sparql)")[0])
         self.dlg.lineSPARQL.setText(self.file_name)
-        with open(self.file_name, 'r') as file:
-            data = file.read()
-            self.sparql = data
-            self.fill_table(data)
+        self.abrir_open()
+        
+    def abrir_open (self):
+        try: 
+            with open(self.file_name, 'r') as file:
+                data = file.read()
+                self.sparql = data
+                self.fill_table(data)
+        except:
+            return
 
     def fill_table(self, s): 
 
@@ -356,3 +365,7 @@ class DBCellsImport:
             comboBox.addItem("Double")
             self.dlg.tableAttributes.setCellWidget(start, 5, comboBox)
             start += 1
+            
+        
+    def close(self):
+        self.dlg.setVisible(False)   
