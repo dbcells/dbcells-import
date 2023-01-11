@@ -293,36 +293,36 @@ class DBCellsImport:
         
         try:
             results = sparql.query().convert()
-            for w in results["results"]["bindings"]:
-                print(w)
-        except Exception as e:
-            print(e)
         
-        features = []
-        i = 0
-        for row in results["results"]["bindings"]:
-            fet = QgsFeature()
-            fet.setGeometry( QgsGeometry.fromWkt ( row[self.geo_column]["value"]) )
-            attrs = []
+            features = []
+            i = 0
+            for row in results["results"]["bindings"]:
+                fet = QgsFeature()
+                fet.setGeometry( QgsGeometry.fromWkt ( row[self.geo_column]["value"]) )
+                attrs = []
+                
+                for attr in self.saveAttrs:
+                    print (attr)
+                    attrs.append(row[attr[2]]["value"])
+                fet.setAttributes(attrs)
+                features.append(fet)
+                i =+ 1
+            layer.addFeatures(features)
+            layer.updateExtents()
+
+
+            layer.commitChanges()
+            QgsProject.instance().addMapLayer(layer)
+            self.iface.messageBar().pushMessage(
+                "Success", "Imported layer",
+                level=Qgis.Success, duration=3
+            )
+        except:
+            self.iface.messageBar().pushMessage(
+                "Error", "Imported layer",
+                level=Qgis.Success, duration=3
+            )
             
-            for attr in self.saveAttrs:
-                print (attr)
-                attrs.append(row[attr[2]]["value"])
-            fet.setAttributes(attrs)
-            features.append(fet)
-            i =+ 1
-        layer.addFeatures(features)
-        layer.updateExtents()
-
-
-        layer.commitChanges()
-        QgsProject.instance().addMapLayer(layer)
-
-
-        self.iface.messageBar().pushMessage(
-            "Success", "Imported layer",
-            level=Qgis.Success, duration=3
-        )
 
 
     def open_sparql (self):
