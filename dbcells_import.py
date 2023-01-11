@@ -319,7 +319,7 @@ class DBCellsImport:
             )
         except:
             self.iface.messageBar().pushMessage(
-                "Error", "layer not imported",
+                "Error", "connection error to triple store",
                 level=Qgis.Success, duration=3
             )
             
