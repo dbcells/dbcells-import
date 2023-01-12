@@ -216,14 +216,16 @@ class DBCellsImport:
         if self.first_start == True:
             self.first_start = False
             self.dlg = DBCellsImportDialog()
-
-        
-        
-        self.dlg.button_box.accepted.connect(self.execute)
-        self.dlg.buttonSPARQL.clicked.connect(self.open_sparql)
+            
+            self.dlg.button_box.accepted.connect(self.execute)
+            
+            self.dlg.button_box.rejected.connect(self.close)
+            
+            self.dlg.buttonSPARQL.clicked.connect(self.open_sparql)
 
         # show the dialog
         self.dlg.show()
+        
         # Run the dialog event loop
         result = self.dlg.exec_()
         # See if OK was pressed
@@ -288,44 +290,52 @@ class DBCellsImport:
         sparql = SPARQLWrapper(self.dlg.lineEndpoint.text())
         sparql.setQuery(self.sparql)
         sparql.setReturnFormat(JSON)
-        results = sparql.query().convert()
-
         
-        features = []
-        i = 0
-        for row in results["results"]["bindings"]:
-            fet = QgsFeature()
-            fet.setGeometry( QgsGeometry.fromWkt ( row[self.geo_column]["value"]) )
-            attrs = []
+        try:
+            results = sparql.query().convert()
+        
+            features = []
+            i = 0
+            for row in results["results"]["bindings"]:
+                fet = QgsFeature()
+                fet.setGeometry( QgsGeometry.fromWkt ( row[self.geo_column]["value"]) )
+                attrs = []
+                
+                for attr in self.saveAttrs:
+                    print (attr)
+                    attrs.append(row[attr[2]]["value"])
+                fet.setAttributes(attrs)
+                features.append(fet)
+                i =+ 1
+            layer.addFeatures(features)
+            layer.updateExtents()
+
+
+            layer.commitChanges()
+            QgsProject.instance().addMapLayer(layer)
+            self.iface.messageBar().pushMessage(
+                "Success", "Imported layer",
+                level=Qgis.Success, duration=3
+            )
+        except:
+            self.iface.messageBar().pushMessage(
+                "Error", "connection error to triple store",
+                level=Qgis.Success, duration=3
+            )
             
-            for attr in self.saveAttrs:
-                print (attr)
-                attrs.append(row[attr[2]]["value"])
-            fet.setAttributes(attrs)
-            features.append(fet)
-            i =+ 1
-        layer.addFeatures(features)
-        layer.updateExtents()
-
-
-        layer.commitChanges()
-        QgsProject.instance().addMapLayer(layer)
-
-
-        self.iface.messageBar().pushMessage(
-            "Success", "Imported layer",
-            level=Qgis.Success, duration=3
-        )
 
 
     def open_sparql (self):
         
         self.file_name=str(QFileDialog.getOpenFileName(caption="Defining input file", filter="SPARQL(*.sparql)")[0])
         self.dlg.lineSPARQL.setText(self.file_name)
-        with open(self.file_name, 'r') as file:
-            data = file.read()
-            self.sparql = data
-            self.fill_table(data)
+        try: 
+            with open(self.file_name, 'r') as file:
+                data = file.read()
+                self.sparql = data
+                self.fill_table(data)
+        except:
+            return
 
     def fill_table(self, s): 
 
@@ -356,3 +366,7 @@ class DBCellsImport:
             comboBox.addItem("Double")
             self.dlg.tableAttributes.setCellWidget(start, 5, comboBox)
             start += 1
+            
+        
+    def close(self):
+        self.dlg.setVisible(False)   
